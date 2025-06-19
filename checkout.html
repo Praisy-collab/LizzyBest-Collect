@@ -4,23 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Checkout – Maximalist Fashion</title>
+
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Orbitron', sans-serif;
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
+
+  <!-- Font Config -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            playfair: ['"Playfair Display"', 'serif'],
+            orbitron: ['Orbitron', 'sans-serif']
+          },
+          colors: {
+            hotpink: '#FF69B4'
+          }
+        }
+      }
     }
-  </style>
+  </script>
 </head>
-<body class="bg-white text-gray-900 flex flex-col min-h-screen">
+
+<body class="bg-white text-gray-900 font-playfair flex flex-col min-h-screen">
 
   <!-- Header -->
-  <header class="flex justify-between items-center p-4 bg-white shadow-md sticky top-0 z-50">
-    <div class="text-3xl font-bold text-pink-600">LizzyBest</div>
-    <nav class="space-x-4 text-sm font-medium flex items-center">
-      <a href="index.html" class="text-pink-600 underline">Home</a>
-      <a href="shop.html" class="hover:text-pink-600">Shop</a>
-      <a href="cart.html" class="hover:text-pink-600">Cart</a>
+  <header class="flex items-center justify-between px-3 py-2 bg-white shadow-md sticky top-0 z-50 w-full text-xs sm:text-sm md:text-base overflow-x-auto whitespace-nowrap">
+    <div class="text-lg sm:text-2xl font-orbitron font-bold text-hotpink whitespace-nowrap">LizzyBest</div>
+    <nav class="flex gap-3 sm:gap-4 items-center">
+      <a href="index.html" class="text-hotpink underline">Home</a>
+      <a href="shop.html" class="hover:text-hotpink">Shop</a>
+      <a href="cart.html" class="hover:text-hotpink">Cart</a>
     </nav>
   </header>
 
@@ -62,7 +79,7 @@
         </div>
 
         <p class="text-sm text-gray-600">
-          After transferring, you can also <a href="https://wa.me/2348012345678" target="_blank" class="text-pink-600 underline">confirm on WhatsApp</a>.
+          After transferring, you can also <a href="https://wa.me/2348012345678" target="_blank" class="text-hotpink underline">confirm on WhatsApp</a>.
         </p>
 
         <div class="flex justify-between font-semibold text-lg">
@@ -70,14 +87,14 @@
           <span id="checkout-total" class="text-pink-700">₦0</span>
         </div>
 
-        <button type="submit" class="w-full bg-pink-600 text-white py-3 rounded hover:bg-pink-700">Place Order</button>
+        <button type="submit" class="w-full bg-hotpink text-white py-3 rounded hover:bg-pink-700">Place Order</button>
       </div>
     </form>
   </main>
 
   <!-- Footer -->
   <footer class="bg-black text-white text-center py-6 mt-10">
-    <p class="text-sm">&copy; 2025 MaxiMode. All rights reserved.</p>
+    <p class="text-sm">&copy; 2025 LizzyBest. All rights reserved.</p>
   </footer>
 
   <!-- Script to fetch and calculate cart total -->
@@ -111,11 +128,7 @@
       event.preventDefault();
 
       alert("Order placed successfully. Thank you for shopping with us!");
-
-      // Clear the cart from localStorage
       localStorage.removeItem("cartItems");
-
-      // Redirect to success page (optional)
       window.location.href = "success.html";
     });
   </script>
