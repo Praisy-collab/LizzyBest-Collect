@@ -96,42 +96,56 @@
   <footer class="bg-black text-white text-center py-6 mt-10">
     <p class="text-sm">&copy; 2025 LizzyBest. All rights reserved.</p>
   </footer>
+<script>
+  function getCartItems() {
+    return JSON.parse(localStorage.getItem("cartItems")) || [];
+  }
 
-  <!-- Script to fetch and calculate cart total -->
-  <script>
-    function getCartItems() {
-      return JSON.parse(localStorage.getItem("cartItems")) || [];
-    }
+  function calculateTotal(items) {
+    return items.reduce((total, item) => {
+      const numericPrice = parseInt(item.price.replace(/\D/g, ""));
+      return total + (numericPrice * item.quantity);
+    }, 0);
+  }
 
-    function calculateTotal(items) {
-      return items.reduce((total, item) => {
-        const numericPrice = parseInt(item.price.replace(/\D/g, ""));
-        return total + (numericPrice * item.quantity);
-      }, 0);
-    }
+  function formatCurrency(amount) {
+    return "₦" + amount.toLocaleString();
+  }
 
-    function formatCurrency(amount) {
-      return "₦" + amount.toLocaleString();
-    }
+  function updateCheckoutTotal() {
+    const items = getCartItems();
+    const total = calculateTotal(items);
+    document.getElementById("checkout-total").textContent = formatCurrency(total);
+  }
 
-    function updateCheckoutTotal() {
-      const items = getCartItems();
-      const total = calculateTotal(items);
-      document.getElementById("checkout-total").textContent = formatCurrency(total);
-    }
+  updateCheckoutTotal();
 
-    // Update total on load
-    updateCheckoutTotal();
+  document.getElementById("checkout-form").addEventListener("submit", function (event) {
+    event.preventDefault();
 
-    // Clear cart on successful form submission
-    document.getElementById("checkout-form").addEventListener("submit", function(event) {
-      event.preventDefault();
+    const name = this.querySelector('input[type="text"]').value;
+    const email = this.querySelector('input[type="email"]').value;
+    const address = this.querySelector('textarea').value;
+    const items = getCartItems();
+    const total = formatCurrency(calculateTotal(items));
 
-      alert("Order placed successfully. Thank you for shopping with us!");
-      localStorage.removeItem("cartItems");
-      window.location.href = "success.html";
+    let message = `Hello, I just placed an order!\n\n`;
+    message += `Name: ${name}\nEmail: ${email}\nAddress: ${address}\n\n`;
+    message += `Order Details:\n`;
+
+    items.forEach(item => {
+      message += `- ${item.name} (${item.price}) x${item.quantity}\n`;
     });
-  </script>
 
+    message += `\nTotal: ${total}\n\nThank you!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.location.href = `https://wa.me/2348074143841?text=${encodedMessage}`;
+
+    // Clear cart
+    localStorage.removeItem("cartItems");
+  });
+</script>
+     
 </body>
 </html>
