@@ -11,7 +11,7 @@
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Playfair+Display:wght@500&display=swap" rel="stylesheet">
 
-  <!-- Font Config -->
+  <!-- Tailwind Config -->
   <script>
     tailwind.config = {
       theme: {
@@ -41,32 +41,30 @@
     </nav>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main -->
   <main class="flex-grow max-w-4xl mx-auto px-4 py-10">
     <h2 class="text-3xl font-bold text-pink-800 mb-6">Checkout</h2>
 
-    <form id="checkout-form" class="space-y-6 bg-white border border-gray-200 p-6 rounded-lg shadow">
+    <form id="checkout-form" class="space-y-6 bg-white border border-gray-200 p-6 rounded-lg shadow" enctype="multipart/form-data">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block mb-1 font-medium">Full Name</label>
-          <input type="text" required class="w-full border px-4 py-2 rounded">
+          <input type="text" required class="w-full border px-4 py-2 rounded" id="name">
         </div>
         <div>
           <label class="block mb-1 font-medium">Email</label>
-          <input type="email" required class="w-full border px-4 py-2 rounded">
+          <input type="email" required class="w-full border px-4 py-2 rounded" id="email">
         </div>
         <div class="md:col-span-2">
           <label class="block mb-1 font-medium">Delivery Address</label>
-          <textarea required class="w-full border px-4 py-2 rounded"></textarea>
+          <textarea required class="w-full border px-4 py-2 rounded" id="address"></textarea>
         </div>
       </div>
 
-      <!-- Bank Transfer Instructions -->
+      <!-- Bank Info -->
       <div class="border-t pt-6 space-y-4">
         <h3 class="text-lg font-semibold">Bank Transfer Instructions</h3>
-        <p class="text-sm text-gray-700">
-          Please make a transfer to the following account before clicking "Place Order":
-        </p>
+        <p class="text-sm text-gray-700">Please make a transfer to the following account before placing your order:</p>
         <div class="bg-gray-100 p-4 rounded">
           <p><strong>Bank:</strong> Zenith Bank</p>
           <p><strong>Account Name:</strong> LizzyBest Fashion</p>
@@ -75,12 +73,9 @@
 
         <div>
           <label class="block mb-1 font-medium">Upload Proof of Payment</label>
-          <input type="file" accept="image/*,application/pdf" required class="w-full border px-4 py-2 rounded">
+          <input type="file" id="proof-file" accept="image/*,application/pdf" required class="w-full border px-4 py-2 rounded">
+          <p id="upload-status" class="text-sm mt-2 text-gray-600">No file uploaded yet.</p>
         </div>
-
-        <p class="text-sm text-gray-600">
-          After transferring, you can also <a href="https://wa.me/2348012345678" target="_blank" class="text-hotpink underline">confirm on WhatsApp</a>.
-        </p>
 
         <div class="flex justify-between font-semibold text-lg">
           <span>Total:</span>
@@ -96,56 +91,98 @@
   <footer class="bg-black text-white text-center py-6 mt-10">
     <p class="text-sm">&copy; 2025 LizzyBest. All rights reserved.</p>
   </footer>
-<script>
-  function getCartItems() {
-    return JSON.parse(localStorage.getItem("cartItems")) || [];
-  }
 
-  function calculateTotal(items) {
-    return items.reduce((total, item) => {
-      const numericPrice = parseInt(item.price.replace(/\D/g, ""));
-      return total + (numericPrice * item.quantity);
-    }, 0);
-  }
+  <!-- Script -->
+  <script>
+    function getCartItems() {
+      return JSON.parse(localStorage.getItem("cartItems")) || [];
+    }
 
-  function formatCurrency(amount) {
-    return "₦" + amount.toLocaleString();
-  }
+    function calculateTotal(items) {
+      return items.reduce((total, item) => {
+        const numericPrice = parseInt(item.price.replace(/\D/g, ""));
+        return total + (numericPrice * item.quantity);
+      }, 0);
+    }
 
-  function updateCheckoutTotal() {
-    const items = getCartItems();
-    const total = calculateTotal(items);
-    document.getElementById("checkout-total").textContent = formatCurrency(total);
-  }
+    function formatCurrency(amount) {
+      return "₦" + amount.toLocaleString();
+    }
 
-  updateCheckoutTotal();
+    function updateCheckoutTotal() {
+      const items = getCartItems();
+      const total = calculateTotal(items);
+      document.getElementById("checkout-total").textContent = formatCurrency(total);
+    }
 
-  document.getElementById("checkout-form").addEventListener("submit", function (event) {
-    event.preventDefault();
+    updateCheckoutTotal();
 
-    const name = this.querySelector('input[type="text"]').value;
-    const email = this.querySelector('input[type="email"]').value;
-    const address = this.querySelector('textarea').value;
-    const items = getCartItems();
-    const total = formatCurrency(calculateTotal(items));
+    document.getElementById("checkout-form").addEventListener("submit", async function (event) {
+      event.preventDefault();
 
-    let message = `Hello, I just placed an order!\n\n`;
-    message += `Name: ${name}\nEmail: ${email}\nAddress: ${address}\n\n`;
-    message += `Order Details:\n`;
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const fileInput = document.getElementById("proof-file");
+      const status = document.getElementById("upload-status");
+      const cartItems = getCartItems();
+      const totalAmount = formatCurrency(calculateTotal(cartItems));
 
-    items.forEach(item => {
-      message += `- ${item.name} (${item.price}) x${item.quantity}\n`;
+      if (!fileInput.files[0]) {
+        alert("Please upload your proof of payment.");
+        return;
+      }
+
+      status.textContent = "Uploading file...";
+
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        // 1. Upload to Netlify Function
+        const uploadRes = await fetch("/.netlify/functions/upload-proof", {
+          method: "POST",
+          body: formData,
+        });
+
+        const uploadResult = await uploadRes.json();
+        if (!uploadRes.ok || !uploadResult.url) {
+          throw new Error("Upload failed.");
+        }
+
+        const proofUrl = uploadResult.url;
+        status.innerHTML = `✅ Uploaded! <a href="${proofUrl}" target="_blank" class="text-hotpink underline">View</a>`;
+
+        // 2. Submit Order to Netlify
+        const order = {
+          name,
+          email,
+          address,
+          items: cartItems,
+          total: totalAmount,
+          proofUrl,
+        };
+
+        const orderRes = await fetch("/.netlify/functions/submit-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(order),
+        });
+
+        const orderResult = await orderRes.json();
+        if (!orderRes.ok) {
+          throw new Error(orderResult.message || "Order submission failed.");
+        }
+
+        // 3. Clear Cart and Redirect
+        localStorage.removeItem("cartItems");
+        window.location.href = "success.html";
+      } catch (err) {
+        console.error(err);
+        alert("Something went wrong: " + err.message);
+        status.textContent = "Upload failed. Please try again.";
+      }
     });
-
-    message += `\nTotal: ${total}\n\nThank you!`;
-
-    const encodedMessage = encodeURIComponent(message);
-    window.location.href = `https://wa.me/2348074143841?text=${encodedMessage}`;
-
-    // Clear cart
-    localStorage.removeItem("cartItems");
-  });
-</script>
-     
+  </script>
 </body>
 </html>
