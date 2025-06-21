@@ -1,50 +1,47 @@
+const multiparty = require("multiparty");
+const fs = require("fs");
+const path = require("path");
+
 exports.handler = async (event) => {
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
-      body: "Method Not Allowed",
+      body: JSON.stringify({ error: "Method Not Allowed" }),
     };
   }
 
-  try {
-    const data = JSON.parse(event.body);
+  return new Promise((resolve) => {
+    const form = new multiparty.Form();
 
-    const {
-      name,
-      email,
-      address,
-      total,
-      proofUrl,
-      items,
-    } = data;
+    form.parse(event, async (err, fields, files) => {
+      if (err) {
+        console.error("Form parse error:", err);
+        return resolve({
+          statusCode: 500,
+          body: JSON.stringify({ error: "Error parsing form data." }),
+        });
+      }
 
-    const whatsappNumber = "2348074143841"; // your WhatsApp number
+      const file = files?.["file"]?.[0];
+      if (!file) {
+        return resolve({
+          statusCode: 400,
+          body: JSON.stringify({ error: "No file uploaded." }),
+        });
+      }
 
-    let message = `*New Order Received!*%0A%0A`;
-    message += `*Name:* ${name}%0A`;
-    message += `*Email:* ${email}%0A`;
-    message += `*Address:* ${address}%0A%0A`;
-    message += `*Items Ordered:*%0A`;
+      const fileName = path.basename(file.originalFilename);
+      const tempPath = file.path;
 
-    items.forEach(item => {
-      message += `- ${item.name} (${item.price}) x${item.quantity}%0A`;
+      // You can upload to an S3 bucket, Cloudinary, etc. here.
+      // For now, just simulate a successful upload:
+      return resolve({
+        statusCode: 200,
+        body: JSON.stringify({
+          message: "Upload successful",
+          fileUrl: `https://dummy-storage.com/${fileName}`,
+        }),
+      });
     });
-
-    message += `%0A*Total:* ${total}%0A`;
-    message += `%0A*Proof of Payment:* ${proofUrl}%0A`;
-
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ success: true, whatsappUrl }),
-    };
-
-  } catch (error) {
-    console.error("Order submission error:", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ success: false, error: error.message }),
-    };
-  }
+  });
 };
